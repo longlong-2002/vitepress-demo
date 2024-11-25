@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 import timeline from "vitepress-markdown-timeline"; 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  
+  base: '/vitepress-demo/', 
   
     //appearance:true, //默认浅色且开启切换
   //启用深色模式
