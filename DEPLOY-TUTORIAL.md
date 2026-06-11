@@ -1,138 +1,141 @@
 ﻿# VitePress 博客自定义域名部署教程 (likl.cc.cd)
 
-本文档说明如何将博客部署到自定义域名 **likl.cc.cd**（GitHub Pages 托管）。
+本文档说明如何将 VitePress 博客部署到自定义域名 **likl.cc.cd**（GitHub Pages 托管）。
 
 ---
 
-## 一、域名 DNS 配置（需要在域名管理后台操作）
+## 一、修改项目代码
 
-在域名服务商（如阿里云/腾讯云/Godaddy）添加以下 DNS 记录：
+### 1. 添加 CNAME 文件
 
-| 类型 | 主机记录 | 记录值 | 说明 |
-|------|---------|--------|------|
-| CNAME | `www` | `longlong-2002.github.io` | 将 www.likl.cc.cd 指向 GitHub Pages |
-| CNAME | `@` | `longlong-2002.github.io` | 将 likl.cc.cd 直接指向 GitHub Pages（部分服务商需用 ALIAS 或 ANAME 记录） |
-
-> **重要：** `longlong-2002.github.io` 替换为你的实际 GitHub Pages 用户名。如果你的仓库名为 `用户名.github.io`，则 CNAME 目标为该仓库名。
-
-DNS 传播可能需要几分钟到几小时。
-
----
-
-## 二、GitHub 仓库配置
-
-### 1. 打开仓库设置
-
-进入 `https://github.com/longlong-2002/vitepress-demo/settings/pages`
-
-### 2. 自定义域名
-
-在 **"Custom domain"** 输入框中填入：
+在仓库**根目录**创建 `CNAME` 文件（没有后缀），内容为：
 
 ```
 likl.cc.cd
 ```
 
-点击 **Save** 保存。
+> ⚠️ 注意：文件名就是 `CNAME`，没有 `.txt` 后缀。
 
-### 3. 等待验证
+### 2. 修复 config.mjs
 
-GitHub 会验证域名所有权（通过 CNAME 记录）。验证通过后，会显示：
+确保 `.vitepress/config.mjs` 中 `title` 只定义一次，没有乱码：
 
+```js
+export default defineConfig({
+  base: "/",
+  title: "龙龙的技术日记",
+  appearance: "dark",
+  // ... 其余配置
+})
 ```
-✓ Your site is successfully deployed
-Custom domain is configured
+
+### 3. 更新部署脚本
+
+`.github/workflows/deploy.yml` 中构建步骤需要包含复制 CNAME 文件：
+
+```yaml
+- name: Build with VitePress
+  run: |
+    pnpm run docs:build
+    cp CNAME .vitepress/dist/CNAME 2>/dev/null || true
+    touch .nojekyll
 ```
-
-> ⚠️ 首次使用可能需要等待 DNS 生效（通常 10 分钟 ~ 24 小时）。
-
-### 4. 强制 HTTPS（推荐）
-
-勾选 **"Enforce HTTPS"** 选项，使网站使用 HTTPS 访问。
 
 ---
 
-## 三、本地开发
+## 二、推送代码到 GitHub
+
+```powershell
+cd D:\my-notes\vitepress-demo
+git add -A
+git commit -m "fix: configure custom domain likl.cc.cd"
+git push origin master
+```
+
+> 如果 `git push` 失败，需要输入 **GitHub Personal Access Token**（不是密码）。
+> 也可以在 GitHub 网页端手动上传 `CNAME`、`.vitepress/config.mjs`、`.github/workflows/deploy.yml` 三个文件。
+
+推送后 GitHub Actions 会自动构建部署，等 1~3 分钟。
+
+---
+
+## 三、域名 DNS 配置
+
+### 1. 验证域名所有权（TXT 记录）
+
+在域名管理后台（DNS 解析管理页面）添加：
+
+| 记录类型 | 记录名称 | 记录值 |
+|---------|---------|--------|
+| **TXT** | `_github-pages-challenge-longlong-2002.likl` | `8fffc940108b51154035df52fde9c4`（从 GitHub 复制） |
+
+添加后回到 GitHub 点击 **验证** 按钮。
+
+### 2. 域名解析到 GitHub Pages（CNAME 记录）
+
+添加两条 CNAME 记录：
+
+| 记录类型 | 记录名称 | 记录值 |
+|---------|---------|--------|
+| **CNAME** | `@` | `longlong-2002.github.io`（换成你自己的 GitHub 用户名） |
+| **CNAME** | `www` | `longlong-2002.github.io`（换成你自己的 GitHub 用户名） |
+
+添加后保存，等几分钟生效。
+
+---
+
+## 四、GitHub Pages 配置
+
+1. 打开仓库的 Pages 设置：`https://github.com/longlong-2002/vitepress-demo/settings/pages`
+2. **Source** 选择 **GitHub Actions**
+3. 自定义域名 `likl.cc.cd` 显示为 **Verified**
+4. 点击 **Enforce HTTPS** 勾选强制 HTTPS
+5. 保存
+
+---
+
+## 五、验证
+
+等待 1~5 分钟后访问 `https://likl.cc.cd`，如果看到博客首页就说明部署成功。
+
+---
+
+## 六、常见问题
+
+### Q1: 访问显示 404
+
+- 确认代码已推送到 GitHub（GitHub Actions 有构建记录吗？）
+- 确认 DNS CNAME 记录已添加且已生效
+- 确认 GitHub Pages Settings 中已启用 HTTPS
+
+### Q2: 未来更换域名
+
+1. 修改根目录 `CNAME` 文件，写入新域名
+2. 修改 GitHub Pages Settings 中的 Custom Domain
+3. 在域名管理后台更新 DNS 记录
+
+### Q3: 本地开发
 
 ```bash
-# 进入项目目录
 cd vitepress-demo
-
-# 安装依赖（如果没有 pnpm，用 npm）
 npm install
-# 或
-pnpm install
-
-# 启动本地开发服务器
 npm run docs:dev
-# 或
-pnpm docs:dev
-
 # 访问 http://localhost:5173
 ```
 
----
-
-## 四、构建与部署
-
-### 方式一：自动部署（推荐，使用 GitHub Actions）
-
-每次推送 `master` 分支时，GitHub Actions 会自动构建并部署。
-
-**关键文件：** `.github/workflows/deploy.yml`
-
-自动部署会完成以下操作：
-1. 安装依赖（pnpm）
-2. 构建 VitePress 站点
-3. **复制 CNAME 文件到构建产物**（确保自定义域名生效）
-4. 上传到 GitHub Pages
-
-### 方式二：手动构建部署
-
-```bash
-# 构建
-npm run docs:build
-
-# 构建产物在 .vitepress/dist/ 目录
-# 复制 CNAME 文件
-cp CNAME .vitepress/dist/CNAME
-
-# 将 .vitepress/dist/ 内容上传到 GitHub Pages
-```
+本地开发时 CNAME 文件不会影响本地访问。
 
 ---
 
-## 五、修改域名
-
-如果未来需要更换域名，只需修改两个地方：
-
-### 1. 修改根目录下的 `CNAME` 文件
-
-```
-# CNAME
-# 将旧域名改为新域名，例如：
-newdomain.com
-```
-
-### 2. 修改 GitHub Pages 设置
-
-进入 GitHub 仓库 Settings → Pages → Custom domain，填入新域名。
-
-### 3. 更新 DNS 解析
-
-在域名服务商处更新 CNAME 记录指向 GitHub Pages。
-
----
-
-## 六、项目文件结构
+## 七、项目文件结构
 
 ```
 vitepress-demo/
 ├── .github/workflows/deploy.yml   # GitHub Actions 自动部署配置
 ├── .vitepress/
-│   ├── config.mjs                 # VitePress 主配置（站点信息、导航、侧边栏等）
-│   └── dist/                      # 构建产物（不要手动编辑）
-├── CNAME                          # 自定义域名文件（必填！）
+│   └── config.mjs                 # VitePress 主配置
+├── CNAME                          # 自定义域名文件
+├── DEPLOY-TUTORIAL.md             # 本教程
 ├── index.md                       # 首页内容
 ├── package.json                   # 项目依赖
 ├── about/                         # 关于页内容
@@ -141,29 +144,5 @@ vitepress-demo/
 ├── experience/                    # 踩坑经验
 ├── leading/                       # 前端文章
 ├── tools/                         # 工具文章
-└── public/                        # 公共资源（logo 等，构建后在根目录访问）
+└── public/                        # 公共资源（logo 等）
 ```
-
----
-
-## 七、常见问题
-
-### Q1: 部署后域名无法访问
-
-- 检查 DNS CNAME 记录是否正确指向 `用户名.github.io`
-- 等待 DNS 生效（通常几分钟到几小时）
-- 检查 GitHub Pages 设置中是否正确配置了 Custom domain
-
-### Q2: CNAME 文件丢失
-
-- 每次 `docs:build` 不会自动复制 CNAME
-- 本地开发时手动执行：`cp CNAME .vitepress/dist/CNAME`
-- GitHub Actions 已自动包含此步骤
-
-### Q3: 如何修改导航栏/侧边栏
-
-编辑 `.vitepress/config.mjs` 中的 `nav`（导航栏）和 `sidebar`（侧边栏）配置。
-
-### Q4: 如何添加新文章
-
-在对应目录（如 `daily/`）下新建 `.md` 文件，在 `index.md` 中配置侧边栏即可。

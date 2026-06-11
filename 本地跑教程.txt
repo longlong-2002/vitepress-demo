@@ -1,0 +1,3 @@
+cd d:\my-notes\vitepress-demo
+npm install
+npm run docs:dev

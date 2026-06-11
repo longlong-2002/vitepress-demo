@@ -1,57 +1,79 @@
-﻿name: Deploy VitePress site to Pages
+﻿name: Deploy VitePress to GitHub Pages
 
 on:
   push:
     branches: [master]
 
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+# Ensure permissions are scoped correctly
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Cancel in-progress deployments for the same branch
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
+  # ── Build job ──────────────────────────────────────────
   build:
+    name: Build VitePress
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: 8.6.12
-      - name: Setup Node
-        uses: actions/setup-node@v3
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: pnpm
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
+          registry-url: https://registry.npmjs.org
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
       - name: Install dependencies
-        run: pnpm install
-      - name: Build with VitePress
+        run: pnpm install --frozen-lockfile
+
+      - name: Build VitePress
+        run: pnpm run docs:build
+
+      - name: Copy CNAME to dist
         run: |
-          pnpm run docs:build
-          cp CNAME .vitepress/dist/CNAME 2>/dev/null || true
-          touch .nojekyll
+          [ -f CNAME ] && cp CNAME .vitepress/dist/CNAME || true
+          touch .vitepress/dist/.nojekyll
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
 
+  # ── Deploy job ─────────────────────────────────────────
   deploy:
+    name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
-    name: Deploy
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4

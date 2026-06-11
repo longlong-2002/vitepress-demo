@@ -1,6 +1,6 @@
 ---
-# https://vitepress.dev/reference/default-theme-home-page
 layout: home
+layoutClass: 'm-home-layout'
 
 hero:
   name: "小龙同学"
@@ -12,10 +12,10 @@ hero:
   actions:
     - theme: brand
       text: 日常笔记
-      link: /markdown-examples
+      link: /daily/
     - theme: alt
       text: 关于我
-      link: /about/aboutme.md
+      link: /about/think
 
 features:
   - icon: 🐞
@@ -31,17 +31,11 @@ lastUpdated: true
 ---
 <!-- 添加到md文章末尾 -->
 <confetti />
-<VisitorPanel />
-
-
-
 <style>
-/*爱的魔力转圈圈*/
 .m-home-layout .image-src:hover {
   transform: translate(-50%, -50%) rotate(666turn);
   transition: transform 59s 1s cubic-bezier(0.3, 0, 0.8, 1);
 }
-
 
 .m-home-layout .details small {
   opacity: 0.8;

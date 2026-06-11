@@ -1,0 +1,16 @@
+﻿#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Conventional Commits: type(scope): description
+# Types: feat, fix, docs, style, refactor, perf, test, chore, build, ci
+if ! npx --no -- commitlint --edit $1 2>/dev/null; then
+  # Fallback: basic format check if commitlint not installed
+  MSG=$(cat "$1")
+  if ! echo "$MSG" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: .{1,72}"; then
+    echo "⚠️  Commit message does not follow Conventional Commits format."
+    echo "   Expected: type(scope): description"
+    echo "   Example:  feat(vitepress): add dark mode support"
+    echo "   Types:    feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert"
+    exit 1
+  fi
+fi

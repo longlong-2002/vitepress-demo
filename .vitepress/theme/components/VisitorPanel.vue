@@ -7,7 +7,7 @@
             <span id="busuanzi_value_site_pv" class="font-bold">--</span> 次
           </span>
           <img
-            src="/heart.gif"
+            src="/heart.svg"
             alt="heart"
             class="heart-img"
             width="50"
