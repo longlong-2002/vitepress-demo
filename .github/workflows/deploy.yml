@@ -4,22 +4,18 @@ on:
   push:
     branches: [master]
 
-  # Allow manual trigger from Actions tab
   workflow_dispatch:
 
-# Ensure permissions are scoped correctly
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Cancel in-progress deployments for the same branch
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  # ── Build job ──────────────────────────────────────────
   build:
     name: Build VitePress
     runs-on: ubuntu-latest
@@ -39,21 +35,12 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          registry-url: https://registry.npmjs.org
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: NODE_OPTIONS=--encoding=utf-8; pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build VitePress
-        run: NODE_OPTIONS=--encoding=utf-8 pnpm run docs:build
+        run: pnpm run docs:build
 
       - name: Copy CNAME to dist
         run: |
@@ -65,7 +52,6 @@ jobs:
         with:
           path: .vitepress/dist
 
-  # ── Deploy job ─────────────────────────────────────────
   deploy:
     name: Deploy to GitHub Pages
     environment:
