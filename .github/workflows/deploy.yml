@@ -50,10 +50,10 @@ jobs:
             ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: NODE_OPTIONS=--encoding=utf-8; pnpm install --frozen-lockfile
 
       - name: Build VitePress
-        run: pnpm run docs:build
+        run: NODE_OPTIONS=--encoding=utf-8 pnpm run docs:build
 
       - name: Copy CNAME to dist
         run: |

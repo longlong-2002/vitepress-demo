@@ -1,3 +1,9 @@
 cd d:\my-notes\vitepress-demo
 npm install
 npm run docs:dev
+
+更新笔记
+cd D:\my-notes\vitepress-demo
+git add -A
+git commit -m "docs: 添加 xxx 笔记"
+git push origin master
